@@ -31,11 +31,12 @@ dev API key.
 3. ~~Fill in your real details.~~ **Done:** the policy names AXOmega and
    support@axomega.com, dated 27 September 2026, with no placeholders left. It lives in
    `PRIVACY.md` at the repo root (plus `docs/privacy-policy.html` for the hosted page).
-4. **Privacy policy URL.** Live, verified anonymously, no login needed:
+4. ~~Host the privacy policy.~~ **Done - use this URL in the dashboard:**
    https://github.com/axomega-com/YouTube-Vibe-Borders-Chrome-Extension/blob/main/PRIVACY.md
-   GitHub Pages is *not* enabled - creating the site needs a Settings visit or a PAT with
-   `Pages: write`. Once enabled with source `main` / `docs`, the dedicated page becomes
-   https://axomega-com.github.io/YouTube-Vibe-Borders-Chrome-Extension/privacy-policy.html
+   Verified logged out: HTTP 200, policy text present, no login required.
+   Optional upgrade: enable Pages (Settings -> Pages -> Source `main`, folder `/docs`) for a
+   dedicated page at https://axomega-com.github.io/YouTube-Vibe-Borders-Chrome-Extension/privacy-policy.html
+   That was declined in favour of the repo URL; re-adding a Pages workflow is the only step.
 5. **Mint a throwaway, credit-limited OpenRouter key** for the reviewer, revoke it after
    approval, and paste it into `store/reviewer-notes.md` where it says
    `[PASTE A TEMPORARY OPENROUTER KEY HERE]`.
