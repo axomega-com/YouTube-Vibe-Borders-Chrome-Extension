@@ -6,7 +6,7 @@ import { findChrome, LAUNCH_FLAGS } from './chrome-path.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PROFILE = path.join(ROOT, '.chrome-profile');
 const OUT = path.join(ROOT, 'out');
-const EXT = path.join(ROOT, 'src');
+const EXT = process.env.E2E_EXT_DIR || path.join(ROOT, 'src');
 const PORT = Number(process.env.CDP_PORT || 9333);
 const EXTENSION_NAME = 'YouTube Vibe Borders';
 const URL_UNDER_TEST =
