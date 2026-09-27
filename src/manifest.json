@@ -1,12 +1,22 @@
 {
   "manifest_version": 3,
   "name": "YouTube Vibe Borders",
-  "version": "0.3.0",
-  "description": "Scores YouTube videos for positivity/negativity and outlines each thumbnail on a red-to-green gradient.",
-  "permissions": ["storage", "tabs", "scripting"],
+  "version": "1.0.0",
+  "description": "Scores each YouTube video for positivity and negativity, then outlines its thumbnail on a red-to-green gradient.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "permissions": ["storage", "scripting"],
   "host_permissions": ["https://openrouter.ai/*", "https://www.youtube.com/*"],
   "background": { "service_worker": "background/service-worker.js", "type": "module" },
-  "action": { "default_popup": "popup/popup.html", "default_title": "YouTube Vibe Borders" },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "YouTube Vibe Borders",
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" }
+  },
   "options_page": "options/options.html",
   "content_scripts": [
     {

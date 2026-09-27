@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy policy - Vibe Borders for YouTube</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin: 0 auto; max-width: 46rem; padding: 2.5rem 1.25rem 5rem;
+         font: 16px/1.65 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  h1 { font-size: 1.7rem; line-height: 1.25; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; }
+  code { background: #8882; padding: .1em .35em; border-radius: 4px; }
+  .lede { font-size: 1.05rem; }
+  footer { margin-top: 3rem; font-size: .9rem; opacity: .75; }
+</style>
+</head>
+<body>
+<h1>Privacy policy for Vibe Borders for YouTube</h1>
+<p class="lede"><em>Last updated: [DATE]</em></p>
+<p>Vibe Borders for YouTube ("the extension") is published by [YOUR NAME OR COMPANY]
+("we", "us"). This policy explains exactly what the extension does with your data.</p>
+
+<h2>Short version</h2>
+<p>We do not collect anything. There is no server of ours, no analytics, and no tracking.
+The only data that leaves your browser is the title and channel name of the YouTube videos
+being scored, and it goes straight to the API provider whose key you supplied.</p>
+
+<h2>What the extension stores, and where</h2>
+<p>Everything below is stored in your browser's extension storage, on your device. It is
+never sent to us, because we have no server to send it to.</p>
+<ul>
+  <li><strong>Your OpenRouter API key</strong> &mdash; used to authenticate your own requests
+      to OpenRouter.</li>
+  <li><strong>Your chosen model id</strong> &mdash; the OpenRouter model used for scoring.</li>
+  <li><strong>A local cache of scores</strong> &mdash; keyed by YouTube video id, so the same
+      video is not scored repeatedly. Clear it any time with "Clear score cache" in the
+      extension popup.</li>
+</ul>
+
+<h2>What leaves your browser</h2>
+<p>When you view YouTube pages, the extension sends the <strong>video title and channel
+name</strong> of each video being scored to the OpenRouter API
+(<code>https://openrouter.ai/api/v1</code>) using your own API key. This is the only
+outbound request the extension makes.</p>
+<p>It does <strong>not</strong> read, collect, or transmit:</p>
+<ul>
+  <li>your name, email address, or Google or YouTube account details</li>
+  <li>your browsing history, other open tabs, or any site other than youtube.com</li>
+  <li>video contents, keystrokes, form input, or cookies</li>
+  <li>passwords or any other credentials besides the API key you paste in</li>
+</ul>
+<p>No advertising identifier, analytics event, or telemetry is generated. No data is sold or
+shared with anyone other than OpenRouter, and only the data described above.</p>
+
+<h2>Third-party service</h2>
+<p>Scoring is performed by OpenRouter. Data sent there is handled under OpenRouter's own
+privacy policy: <a href="https://openrouter.ai/privacy">https://openrouter.ai/privacy</a></p>
+
+<h2>Data retention and deletion</h2>
+<p>Scores are kept in your browser's local extension storage until you clear them. To remove
+everything the extension has stored: open the extension popup and click <strong>Clear score
+cache</strong>, and remove the extension from <code>chrome://extensions</code>, which deletes
+its storage and your saved API key. We hold no copy of any of it, so there is nothing for us
+to delete on your behalf.</p>
+
+<h2>Children</h2>
+<p>The extension is not directed at children and collects no personal information from
+anyone.</p>
+
+<h2>Changes</h2>
+<p>If this policy changes, the revised version will be published at this URL with an updated
+date, and material changes will be noted in the extension's store listing.</p>
+
+<h2>Contact</h2>
+<p>[YOUR CONTACT EMAIL]</p>
+
+<footer>
+  <p>Not affiliated with, endorsed by, or sponsored by YouTube or Google.</p>
+</footer>
+</body>
+</html>
