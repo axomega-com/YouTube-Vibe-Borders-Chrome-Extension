@@ -8,6 +8,7 @@ const PROFILE = path.join(ROOT, '.chrome-profile');
 const OUT = path.join(ROOT, 'out');
 const EXT = path.join(ROOT, 'src');
 const PORT = Number(process.env.CDP_PORT || 9333);
+const EXTENSION_NAME = 'YouTube Vibe Borders';
 const URL_UNDER_TEST =
   process.env.TARGET_URL || 'https://www.youtube.com/results?search_query=good+news+stories&hl=en&gl=US';
 const TIMEOUT_MS = Number(process.env.E2E_TIMEOUT_MS || 180000);
@@ -17,6 +18,7 @@ class Cdp {
     this.ws = ws;
     this.nextId = 0;
     this.pending = new Map();
+    this.handlers = new Map();
     ws.addEventListener('message', (event) => {
       const msg = JSON.parse(event.data);
       if (msg.id && this.pending.has(msg.id)) {
@@ -24,8 +26,14 @@ class Cdp {
         this.pending.delete(msg.id);
         if (msg.error) reject(new Error(JSON.stringify(msg.error)));
         else resolve(msg.result);
+      } else if (msg.method) {
+        for (const fn of this.handlers.get(msg.method) ?? []) fn(msg.params, msg.sessionId);
       }
     });
+  }
+  on(method, fn) {
+    if (!this.handlers.has(method)) this.handlers.set(method, []);
+    this.handlers.get(method).push(fn);
   }
   send(method, params = {}, sessionId) {
     const id = ++this.nextId;
@@ -47,6 +55,43 @@ async function waitForDevTools() {
     await sleep(500);
   }
   throw new Error('DevTools endpoint never came up on port ' + PORT);
+}
+
+/**
+ * Find OUR extension's service worker.
+ *
+ * Do NOT take the first chrome-extension:// service worker: Chrome for Testing ships
+ * built-in component extensions (e.g. "Google Hangouts") that run one too, and injecting
+ * a key into those silently does nothing. Match our own manifest name instead, and retry
+ * because chrome.* is briefly unbound right after the worker starts.
+ */
+async function findOurWorker(cdp) {
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    const { targetInfos } = await cdp.send('Target.getTargets');
+    const workers = targetInfos.filter((t) => t.type === 'service_worker' && t.url.startsWith('chrome-extension://'));
+    for (const worker of workers) {
+      let sessionId;
+      try {
+        ({ sessionId } = await cdp.send('Target.attachToTarget', { targetId: worker.targetId, flatten: true }));
+        await cdp.send('Runtime.enable', {}, sessionId);
+        const res = await cdp.send(
+          'Runtime.evaluate',
+          {
+            expression: 'chrome.runtime && chrome.runtime.getManifest && chrome.runtime.getManifest().name',
+            returnByValue: true,
+          },
+          sessionId,
+        );
+        if (res.result?.value === EXTENSION_NAME) return { id: new URL(worker.url).host, sessionId, url: worker.url };
+      } catch {}
+      if (sessionId) await cdp.send('Target.detachFromTarget', { sessionId }).catch(() => {});
+    }
+    await sleep(1000);
+  }
+  throw new Error(
+    `no service worker reporting the name "${EXTENSION_NAME}": --load-extension was probably ignored ` +
+      '(use Chrome for Testing, not branded Chrome or Canary)',
+  );
 }
 
 async function main() {
@@ -87,22 +132,14 @@ async function main() {
   const cdp = new Cdp(ws);
   await cdp.send('Target.setDiscoverTargets', { discover: true });
 
-  // 1. Find the extension id from its service worker target.
-  let extId = null;
-  for (let i = 0; i < 30 && !extId; i += 1) {
-    const { targetInfos } = await cdp.send('Target.getTargets');
-    const sw = targetInfos.find((t) => t.type === 'service_worker' && t.url.startsWith('chrome-extension://'));
-    if (sw) extId = new URL(sw.url).host;
-    else await sleep(500);
-  }
-  if (!extId) {
-    throw new Error(
-      'extension service worker never appeared: --load-extension was ignored (are you using Chrome for Testing?)',
-    );
-  }
-  console.log('extension id:', extId);
+  // --- 1. locate our extension by name
+  const worker = await findOurWorker(cdp);
+  console.log('extension id:', worker.id);
+  cdp.on('Runtime.consoleAPICalled', (p, s) => {
+    if (s === worker.sessionId) console.log('[SW]', p.args.map((a) => a.value ?? a.description ?? a.type).join(' '));
+  });
 
-  // 2. Inject the API key into chrome.storage from an extension page.
+  // --- 2. inject the API key straight into extension storage (no page needed)
   let apiKey = process.env.YTVB_API_KEY;
   if (!apiKey) {
     try {
@@ -110,30 +147,29 @@ async function main() {
       apiKey = text.match(/DEV_API_KEY\s*=\s*"([^"]+)"/)?.[1];
     } catch {}
   }
-  if (apiKey) {
-    const { targetId } = await cdp.send('Target.createTarget', {
-      url: `chrome-extension://${extId}/options/options.html`,
-    });
-    const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
-    await cdp.send('Page.enable', {}, sessionId);
-    const result = await cdp.send(
-      'Runtime.evaluate',
-      {
-        expression: `chrome.storage.local.set({ apiKey: ${JSON.stringify(apiKey)} }).then(() => 'key-set')`,
-        awaitPromise: true,
-        returnByValue: true,
-      },
-      sessionId,
-    );
-    console.log('key injection:', result.result?.value);
-    await cdp.send('Target.closeTarget', { targetId });
-  } else {
-    console.log('WARNING: no API key available; run `node tools/set-key.mjs` first');
-  }
+  if (!apiKey) throw new Error('no API key: run `node tools/set-key.mjs` or set YTVB_API_KEY');
 
-  // 3. Open the page under test.
+  const injected = await cdp.send(
+    'Runtime.evaluate',
+    {
+      expression: `chrome.storage.local.set({ apiKey: ${JSON.stringify(apiKey)} }).then(() => 'stored ' + ${apiKey.length})`,
+      awaitPromise: true,
+      returnByValue: true,
+    },
+    worker.sessionId,
+  );
+  if (!String(injected.result?.value ?? '').startsWith('stored')) {
+    throw new Error('key injection failed: ' + JSON.stringify(injected.exceptionDetails ?? injected.result));
+  }
+  console.log('key injection:', injected.result.value);
+
+  // --- 3. open the page under test
   const { targetId: pageId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId: page } = await cdp.send('Target.attachToTarget', { targetId: pageId, flatten: true });
+  cdp.on('Runtime.consoleAPICalled', (p, s) => {
+    if (s === page) console.log('[page]', p.args.map((a) => a.value ?? a.description ?? a.type).join(' '));
+  });
+  await cdp.send('Runtime.enable', {}, page);
   await cdp.send('Page.enable', {}, page);
   await cdp.send('Network.enable', {}, page);
   // Skip the consent interstitial.
@@ -141,25 +177,36 @@ async function main() {
   await cdp.send('Page.navigate', { url: URL_UNDER_TEST }, page);
   console.log('navigated to', URL_UNDER_TEST);
 
-  // 4. Poll for painted cards.
-  const deadline = Date.now() + TIMEOUT_MS;
+  // --- 4. wait for the first paint, then scroll so lazy-rendered cards get scored too
+  const evaluate = async (expression) =>
+    (await cdp.send('Runtime.evaluate', { expression, returnByValue: true }, page)).result?.value;
+  const scoredCount = async () => (await evaluate(`document.querySelectorAll('[data-ytvb-scored]').length`)) ?? 0;
+
+  const started = Date.now();
+  const deadline = started + TIMEOUT_MS;
   let count = 0;
-  while (Date.now() < deadline) {
-    const { result } = await cdp.send(
-      'Runtime.evaluate',
-      { expression: `document.querySelectorAll('[data-ytvb-scored]').length`, returnByValue: true },
-      page,
-    );
-    count = result.value ?? 0;
-    if (count > 0) break;
-    await sleep(2000);
+  while (Date.now() < deadline && count === 0) {
+    count = await scoredCount();
+    if (count === 0) await sleep(2000);
   }
+  console.log(`first paint after ${Math.round((Date.now() - started) / 1000)}s`);
+
+  for (const y of [1200, 2600, 4200]) {
+    await evaluate(`scrollTo(0, ${y})`);
+    await sleep(9000);
+  }
+  await evaluate('scrollTo(0, 0)');
+  await sleep(3000);
+  count = await scoredCount();
+
+  const CARD_TOTAL = `document.querySelectorAll('ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer, ytd-compact-video-renderer').length`;
+  console.log(`cards on page: ${await evaluate(CARD_TOTAL)} | scored: ${count}`);
 
   const { result: dump } = await cdp.send(
     'Runtime.evaluate',
     {
       expression: `JSON.stringify([...document.querySelectorAll('[data-ytvb-scored]')].map((c) => ({
-        title: (c.querySelector('#video-title')?.textContent || '').trim().slice(0, 60),
+        title: (c.querySelector('#video-title')?.textContent || '').trim().slice(0, 50),
         p: Number(c.dataset.ytvbPos), n: Number(c.dataset.ytvbNeg),
         cat: c.dataset.ytvbCategory, color: c.dataset.ytvbColor, label: c.dataset.ytvbLabel,
       })))`,
@@ -183,7 +230,8 @@ async function main() {
         Number.isInteger(r.p) && r.p >= 0 && r.p <= 100 &&
         Number.isInteger(r.n) && r.n >= 0 && r.n <= 100 &&
         typeof r.cat === 'string' && r.cat.length > 0 &&
-        /^rgb\(\d+,\d+,40\)$/.test(r.color || ''),
+        /^rgb\(\d+,\d+,40\)$/.test(r.color || '') &&
+        ['Positive', 'Negative', 'Mixed'].includes(r.label),
     );
 
   console.log('screenshot:', screenshotPath);

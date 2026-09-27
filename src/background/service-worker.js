@@ -91,6 +91,7 @@ async function handleScore(videos) {
     try {
       const { rows } = await callOpenRouter(chunk, apiKey, model);
       const scored = Object.fromEntries(mergeResults(chunk, rows));
+      console.log(`[ytvb] scored ${Object.keys(scored).length}/${chunk.length} videos (${rows.length} rows back)`);
       await cache.putMany(scored);
       Object.assign(out, scored);
     } catch (err) {

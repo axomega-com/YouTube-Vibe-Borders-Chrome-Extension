@@ -1,7 +1,8 @@
 import { findCards, extractMeta, BADGE_CLASS, STYLE_ID, BANNER_ID } from '../lib/selectors.js';
 import { injectStyles, applyScore } from './overlay.js';
 
-const REQUESTED = new Set(); // videoIds already asked about this page load
+const ATTEMPTS = new Map(); // videoId -> how many times we have asked about it
+const MAX_ATTEMPTS_PER_VIDEO = 2; // a model that omits a video gets exactly one retry
 const CARDS = new Map(); // videoId -> card element
 let timer = null;
 
@@ -44,10 +45,12 @@ async function pump() {
     if (card.dataset.ytvbScored || card.dataset.ytvbPending) continue;
     if (!nearViewport(card)) continue;
     const meta = extractMeta(card);
-    if (!meta || REQUESTED.has(meta.videoId)) continue;
+    if (!meta) continue;
+    const tries = ATTEMPTS.get(meta.videoId) ?? 0;
+    if (tries >= MAX_ATTEMPTS_PER_VIDEO) continue;
     card.dataset.ytvbPending = '1';
     CARDS.set(meta.videoId, card);
-    REQUESTED.add(meta.videoId);
+    ATTEMPTS.set(meta.videoId, tries + 1);
     batch.push(meta);
     if (batch.length >= 10) break;
   }
@@ -56,9 +59,9 @@ async function pump() {
     const res = await chrome.runtime.sendMessage({ type: 'ytvb:score', videos: batch });
     applyResponse(res, batch);
   } catch (err) {
-    // Service worker restart mid-flight: let these be retried.
+    // Service worker restart mid-flight: refund the attempt so these are retried.
     console.warn('[ytvb] sendMessage failed:', err);
-    for (const meta of batch) REQUESTED.delete(meta.videoId);
+    for (const meta of batch) ATTEMPTS.set(meta.videoId, Math.max(0, (ATTEMPTS.get(meta.videoId) ?? 1) - 1));
   } finally {
     for (const meta of batch) CARDS.get(meta.videoId)?.removeAttribute('data-ytvb-pending');
   }
@@ -91,7 +94,7 @@ export function start() {
   // Rescan when the user asks, from the popup.
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg?.type !== 'ytvb:rescan') return;
-    REQUESTED.clear();
+    ATTEMPTS.clear();
     for (const card of findCards()) card.removeAttribute('data-ytvb-scored');
     schedule();
   });

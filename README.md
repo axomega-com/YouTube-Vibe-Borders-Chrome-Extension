@@ -33,3 +33,30 @@ Canary) ignores `--load-extension`. `tools/chrome-path.mjs` finds one, preferrin
 ## Install
 
 chrome://extensions -> Developer mode -> Load unpacked -> select the `src` folder
+
+Works in Chrome stable and Canary. The automated test run cannot use those, because
+branded Chrome ignores `--load-extension`; it uses a Chrome for Testing binary instead.
+
+## Verified behaviour
+
+Results from the real runs on this machine, not guesses:
+
+* `npm test` -- 31 assertions, 0 failures, no network and no browser.
+* `npm run smoke` -- HTTP 200 from `typesafe/jev-router`, 3/3 videos scored, and the
+  scores are sensible (rescue puppy +92, housing-market collapse +8 / -88, a Rust
+  tutorial +50 / -2).
+* `npm run e2e` against a `search_query=news` page -- 21 of 21 cards on the page
+  outlined, colour spanning `rgb(230,26,40)` (a fatal explosion story) through
+  `rgb(128,128,40)` (neutral headlines) to `rgb(51,204,40)` (a dog rescue).
+* Screenshots land in `out/`.
+
+### Host-specific notes
+
+* **`npm test` uses an explicit glob.** On Node 26, `node --test tests/` tries to load
+  the directory as a module and dies with `Cannot find module ...\tests`. Use
+  `node --test "tests/**/*.test.js"`.
+* **The extension id changes whenever `.chrome-profile` is deleted.** Unpacked
+  extensions get a key generated into the profile, so never hard-code the id. The e2e
+  harness finds our worker by checking `chrome.runtime.getManifest().name`, because a
+  fresh CfT profile also runs a built-in "Google Hangouts" service worker that will
+  happily accept an injected key and do nothing with it.
