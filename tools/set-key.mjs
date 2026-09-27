@@ -20,3 +20,5 @@ await writeFile(
 );
 console.log(`wrote ${OUT_PATH}`);
 console.log(`key length ${key.length}, prefix ${key.slice(0, 8)}... (value never printed in full)`);
+console.log('This file feeds the Node tools only (npm run smoke / npm run e2e).');
+console.log('The extension itself reads chrome.storage.local - set the key in its Options page.');

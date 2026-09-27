@@ -147,21 +147,24 @@ async function main() {
       apiKey = text.match(/DEV_API_KEY\s*=\s*"([^"]+)"/)?.[1];
     } catch {}
   }
-  if (!apiKey) throw new Error('no API key: run `node tools/set-key.mjs` or set YTVB_API_KEY');
-
-  const injected = await cdp.send(
-    'Runtime.evaluate',
-    {
-      expression: `chrome.storage.local.set({ apiKey: ${JSON.stringify(apiKey)} }).then(() => 'stored ' + ${apiKey.length})`,
-      awaitPromise: true,
-      returnByValue: true,
-    },
-    worker.sessionId,
-  );
-  if (!String(injected.result?.value ?? '').startsWith('stored')) {
-    throw new Error('key injection failed: ' + JSON.stringify(injected.exceptionDetails ?? injected.result));
+  if (process.env.YTVB_NO_INJECT === '1') {
+    console.log('key injection skipped (YTVB_NO_INJECT=1): the extension must find the key itself');
+  } else {
+    if (!apiKey) throw new Error('no API key: run `node tools/set-key.mjs` or set YTVB_API_KEY');
+    const injected = await cdp.send(
+      'Runtime.evaluate',
+      {
+        expression: `chrome.storage.local.set({ apiKey: ${JSON.stringify(apiKey)} }).then(() => 'stored ' + ${apiKey.length})`,
+        awaitPromise: true,
+        returnByValue: true,
+      },
+      worker.sessionId,
+    );
+    if (!String(injected.result?.value ?? '').startsWith('stored')) {
+      throw new Error('key injection failed: ' + JSON.stringify(injected.exceptionDetails ?? injected.result));
+    }
+    console.log('key injection:', injected.result.value);
   }
-  console.log('key injection:', injected.result.value);
 
   // --- 3. open the page under test
   const { targetId: pageId } = await cdp.send('Target.createTarget', { url: 'about:blank' });

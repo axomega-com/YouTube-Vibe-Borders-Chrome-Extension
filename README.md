@@ -39,6 +39,14 @@ chrome://extensions -> Developer mode -> Load unpacked -> select the `src` folde
 Works in Chrome stable and Canary. The automated test run cannot use those, because
 branded Chrome ignores `--load-extension`; it uses a Chrome for Testing binary instead.
 
+### Where the API key lives
+
+`chrome.storage.local`, set once through the extension's own Options page. That is the only
+source: the service worker reads it on every request. There is deliberately no file-based
+fallback, because dynamic `import()` is disallowed inside service workers
+(w3c/ServiceWorker#1356), so any such attempt fails invisibly. `tools/set-key.mjs` writes a
+key file for the **Node tools** (`npm run smoke`, `npm run e2e`) only.
+
 ## Verified behaviour
 
 Results from the real runs on this machine, not guesses:

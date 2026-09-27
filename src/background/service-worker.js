@@ -9,19 +9,17 @@ const cache = makeCache(chrome.storage.local);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Read the key on every request rather than at boot: MV3 service workers are
- * killed after ~30s idle, so a module-level value would go stale after the user
- * saves a new key.
+ * The key lives in chrome.storage.local, written by the options page (or injected by the
+ * test harness). Read it per request rather than at boot: MV3 workers are killed after
+ * ~30s idle, so a module-level value would go stale right after the user saves a new key.
+ *
+ * Do NOT try to import a dev key file here. Dynamic import() is disallowed on
+ * ServiceWorkerGlobalScope by the HTML spec (w3c/ServiceWorker#1356); it throws, and a
+ * swallowing catch turns the extension into one that silently "has no key".
  */
 async function resolveKey() {
   const { apiKey } = await chrome.storage.local.get('apiKey');
-  if (apiKey) return apiKey;
-  try {
-    const dev = await import('./config.local.js'); // gitignored, dev-only fallback
-    return dev.DEV_API_KEY || null;
-  } catch {
-    return null;
-  }
+  return apiKey || null;
 }
 
 async function resolveModel() {
