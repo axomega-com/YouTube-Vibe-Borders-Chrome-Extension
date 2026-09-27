@@ -91,6 +91,18 @@ either layout. To re-check after a YouTube change:
 
     node tools/probe-dom.mjs     # dumps card types, anchors, titles and images per surface
 
+### Publishing to the Chrome Web Store
+
+`bash tools/build-zip.sh` produces `out/youtube-vibe-borders-<version>.zip` from git-tracked
+files only, and refuses to emit a package that the store would reject: manifest not at the
+zip root, missing 128px icon, a `key` field, a dirty `src/` that would not match HEAD, or the
+dev API key. Screenshots at exactly 1280x800 come from `node tools/store-assets.mjs`, icons
+from `node tools/make-icons.mjs` (regeneratable, no dependencies).
+
+The upload text - listing copy, permission justifications, reviewer notes, privacy policy
+(markdown and a hostable HTML page) and the dashboard walkthrough - lives in `store/`. Start
+with `store/checklist.md`.
+
 ### Diagnosing "nothing happens"
 
 The popup reports **This tab: N of M thumbnails scored**. If it says *not running*, the
