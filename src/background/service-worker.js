@@ -43,7 +43,7 @@ async function callOpenRouter(videos, apiKey, model) {
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${apiKey}`,
-    'X-Title': 'YouTube Vibe Borders',
+    'X-Title': 'Vibe Borders for YouTube',
     'HTTP-Referer': chrome.runtime.getURL(''),
   };
 

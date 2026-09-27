@@ -1,4 +1,4 @@
-# YouTube Vibe Borders
+# Vibe Borders for YouTube
 
 Draws a red-to-green gradient border around YouTube thumbnails, coloured by two
 AI-assigned 0-100 scores: green channel = positivity, red channel = negativity.

@@ -11,7 +11,7 @@ const EXT = process.env.E2E_EXT_DIR || path.join(ROOT, 'src');
 // shipped package. That has already bitten this project once.
 console.log('extension dir:', EXT);
 const PORT = Number(process.env.CDP_PORT || 9333);
-const EXTENSION_NAME = 'YouTube Vibe Borders';
+const EXTENSION_NAME = 'Vibe Borders for YouTube';
 const URL_UNDER_TEST =
   process.env.TARGET_URL || 'https://www.youtube.com/results?search_query=good+news+stories&hl=en&gl=US';
 const TIMEOUT_MS = Number(process.env.E2E_TIMEOUT_MS || 180000);

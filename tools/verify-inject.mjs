@@ -60,7 +60,7 @@ for (const t of targetInfos.filter((x) => x.type === 'service_worker' && x.url.s
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId: t.targetId, flatten: true });
   try {
     const name = await evaluate(sessionId, 'chrome.runtime.getManifest().name');
-    if (name === 'YouTube Vibe Borders') { swSession = sessionId; console.log('found worker:', t.url.split('/')[2]); break; }
+    if (name === 'Vibe Borders for YouTube') { swSession = sessionId; console.log('found worker:', t.url.split('/')[2]); break; }
   } catch {}
 }
 if (!swSession) { console.log('FAIL: our service worker not found'); process.exit(1); }

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "YouTube Vibe Borders",
+  "name": "Vibe Borders for YouTube",
   "version": "1.0.0",
   "description": "Scores each YouTube video for positivity and negativity, then outlines its thumbnail on a red-to-green gradient.",
   "icons": {
@@ -14,7 +14,7 @@
   "background": { "service_worker": "background/service-worker.js", "type": "module" },
   "action": {
     "default_popup": "popup/popup.html",
-    "default_title": "YouTube Vibe Borders",
+    "default_title": "Vibe Borders for YouTube",
     "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png" }
   },
   "options_page": "options/options.html",

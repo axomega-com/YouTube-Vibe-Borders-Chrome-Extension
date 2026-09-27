@@ -1,8 +1,8 @@
 # Privacy policy for Vibe Borders for YouTube
 
-_Last updated: [DATE]_
+_Last updated: 27 September 2026_
 
-Vibe Borders for YouTube ("the extension") is published by [YOUR NAME OR COMPANY]
+Vibe Borders for YouTube ("the extension") is published by AXOmega
 ("we", "us"). This policy explains exactly what the extension does with your data.
 
 ## Short version
@@ -64,4 +64,4 @@ date, and material changes will be noted in the extension's store listing.
 
 ## Contact
 
-[YOUR CONTACT EMAIL]
+support@axomega.com

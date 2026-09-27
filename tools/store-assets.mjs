@@ -75,7 +75,7 @@ let extId = null;
 for (const t of targetInfos.filter((x) => x.type === 'service_worker' && x.url.startsWith('chrome-extension://'))) {
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId: t.targetId, flatten: true });
   try {
-    if ((await evaluate(sessionId, 'chrome.runtime.getManifest().name')) === 'YouTube Vibe Borders') {
+    if ((await evaluate(sessionId, 'chrome.runtime.getManifest().name')) === 'Vibe Borders for YouTube') {
       swSession = sessionId;
       extId = t.url.split('/')[2];
       break;

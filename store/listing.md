@@ -5,19 +5,13 @@ Paste these into the Developer Dashboard. Character limits are enforced by the s
 ## Name
 
 ```
-YouTube Vibe Borders
+Vibe Borders for YouTube
 ```
 
-> **Decide this before you upload.** The store locks the published name, and leading with a
-> Google trademark is the most common reason a listing gets flagged for implying
-> affiliation. The conventional safe form is `<Product> for YouTube`:
->
-> ```
-> Vibe Borders for YouTube
-> ```
->
-> Keep the manifest `name` and this field identical. If you want the safer name, change
-> `"name"` in `src/manifest.json` and rebuild the zip (`bash tools/build-zip.sh`).
+> **Name decided: `Vibe Borders for YouTube`.** Chosen over `YouTube Vibe Borders`, because
+> leading with a Google trademark is the usual reason a listing is flagged for implying
+> affiliation, and the store locks the published name permanently. The uploaded package's
+> manifest name is what the store shows, so any future rename means rebuilding the zip.
 
 ## Short description (max 132 chars)
 

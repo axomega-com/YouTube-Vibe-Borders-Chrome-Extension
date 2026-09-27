@@ -28,7 +28,7 @@ function showBanner(text) {
 function applyResponse(res, batch) {
   if (!res) return;
   if (res.error === 'NO_KEY') {
-    showBanner('YouTube Vibe Borders: add your OpenRouter key in the extension options.');
+    showBanner('Vibe Borders for YouTube: add your OpenRouter key in the extension options.');
     return;
   }
   if (res.error) console.warn('[ytvb] scorer error:', res.error, res.detail ?? '');

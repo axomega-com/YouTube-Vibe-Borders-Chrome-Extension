@@ -27,7 +27,7 @@ const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
   headers: {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${await key()}`,
-    'X-Title': 'YouTube Vibe Borders smoke test',
+    'X-Title': 'Vibe Borders for YouTube smoke test',
   },
   body: JSON.stringify({
     model: MODEL,
