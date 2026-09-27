@@ -1,0 +1,4 @@
+src/config.local.js
+out/
+.chrome-profile/
+node_modules/

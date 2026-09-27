@@ -1,0 +1,11 @@
+{
+  "name": "youtube-vibe-borders",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.js\"",
+    "smoke": "node tools/smoke-openrouter.mjs",
+    "e2e": "node tools/e2e.mjs"
+  }
+}

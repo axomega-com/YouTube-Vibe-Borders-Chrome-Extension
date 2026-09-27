@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>YouTube Vibe Borders - Options</title>
+    <style>
+      body { font: 14px/1.6 system-ui, sans-serif; max-width: 480px; margin: 40px auto; padding: 0 16px; }
+      label { display: block; margin-top: 16px; font-weight: 600; }
+      input { width: 100%; padding: 6px; font: inherit; box-sizing: border-box; }
+      button { margin-top: 16px; padding: 8px 16px; cursor: pointer; }
+      #status { margin-top: 12px; color: #070; min-height: 20px; }
+      p.hint { color: #666; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <h1>YouTube Vibe Borders</h1>
+    <label for="key">OpenRouter API key</label>
+    <input id="key" type="password" placeholder="sk-or-v1-..." autocomplete="off" />
+    <p class="hint">Stored locally in chrome.storage.local. Video titles are sent to OpenRouter for scoring; nothing else leaves your browser.</p>
+
+    <label for="model">Model id</label>
+    <input id="model" type="text" placeholder="typesafe/jev-router" />
+
+    <button id="save">Save</button>
+    <div id="status"></div>
+    <script src="options.js" type="module"></script>
+  </body>
+</html>
