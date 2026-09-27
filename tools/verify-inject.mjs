@@ -7,7 +7,8 @@ import { findChrome, LAUNCH_FLAGS } from './chrome-path.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const PROFILE = path.join(ROOT, '.chrome-profile');
-const EXT = path.join(ROOT, 'src');
+const EXT = process.env.E2E_EXT_DIR || path.join(ROOT, 'src');
+console.log('extension dir:', EXT);
 const PORT = 9339;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -68,7 +69,9 @@ if (!swSession) { console.log('FAIL: our service worker not found'); process.exi
 // "cards survived re-injection" assertion below would be vacuously true.
 let apiKey = process.env.YTVB_API_KEY;
 if (!apiKey) {
-  const text = await readFile(path.join(EXT, 'config.local.js'), 'utf8');
+  // Same as tools/e2e.mjs: the key belongs to the harness, so read it from the repo source
+  // rather than from the (possibly packaged) directory under test.
+  const text = await readFile(path.join(ROOT, 'src', 'config.local.js'), 'utf8');
   apiKey = text.match(/DEV_API_KEY\s*=\s*"([^"]+)"/)?.[1];
 }
 if (!apiKey) { console.log('FAIL: no API key - run `node tools/set-key.mjs` or set YTVB_API_KEY'); process.exit(1); }

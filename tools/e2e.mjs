@@ -7,6 +7,9 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const PROFILE = path.join(ROOT, '.chrome-profile');
 const OUT = path.join(ROOT, 'out');
 const EXT = process.env.E2E_EXT_DIR || path.join(ROOT, 'src');
+// Print it: an env var typo here silently tests src/ while you believe you tested the
+// shipped package. That has already bitten this project once.
+console.log('extension dir:', EXT);
 const PORT = Number(process.env.CDP_PORT || 9333);
 const EXTENSION_NAME = 'YouTube Vibe Borders';
 const URL_UNDER_TEST =
@@ -143,7 +146,9 @@ async function main() {
   let apiKey = process.env.YTVB_API_KEY;
   if (!apiKey) {
     try {
-      const text = await readFile(path.join(EXT, 'config.local.js'), 'utf8');
+      // The dev key belongs to the HARNESS, not to the artifact under test: when E2E_EXT_DIR
+      // points at a packaged copy, that copy rightly contains no config.local.js.
+      const text = await readFile(path.join(ROOT, 'src', 'config.local.js'), 'utf8');
       apiKey = text.match(/DEV_API_KEY\s*=\s*"([^"]+)"/)?.[1];
     } catch {}
   }
