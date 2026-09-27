@@ -25,15 +25,17 @@ dev API key.
 1. **Pay the one-off developer registration fee** and create the publisher account at
    https://chrome.google.com/webstore/devconsole (it also requires a verified email and
    2FA on the account).
-2. **Decide the listing name.** See the note in `store/listing.md`: leading with a Google
-   trademark is the usual reason a listing is flagged for implying affiliation, and the name
-   is locked once published. If you want `Vibe Borders for YouTube`, change `"name"` in
-   `src/manifest.json` now, then rebuild.
-3. **Fill in your real details** in `store/privacy-policy.md` / `.html` - every `[DATE]`,
-   `[YOUR NAME OR COMPANY]` and `[YOUR CONTACT EMAIL]` placeholder.
-4. **Host the privacy policy** at a public URL (GitHub Pages, Cloudflare Pages, or a Gist
-   rendered through a service like htmlpreview). The dashboard requires the URL and will not
-   accept the listing without it.
+2. ~~Decide the listing name.~~ **Done:** the package ships as `Vibe Borders for YouTube`
+   (`src/manifest.json`, v1.0.0). The published name is whatever the *uploaded* manifest says,
+   so upload `out/youtube-vibe-borders-1.0.0.zip` or the old name comes back.
+3. ~~Fill in your real details.~~ **Done:** the policy names AXOmega and
+   support@axomega.com, dated 27 September 2026, with no placeholders left. It lives in
+   `PRIVACY.md` at the repo root (plus `docs/privacy-policy.html` for the hosted page).
+4. **Privacy policy URL.** Live, verified anonymously, no login needed:
+   https://github.com/axomega-com/YouTube-Vibe-Borders-Chrome-Extension/blob/main/PRIVACY.md
+   GitHub Pages is *not* enabled - creating the site needs a Settings visit or a PAT with
+   `Pages: write`. Once enabled with source `main` / `docs`, the dedicated page becomes
+   https://axomega-com.github.io/YouTube-Vibe-Borders-Chrome-Extension/privacy-policy.html
 5. **Mint a throwaway, credit-limited OpenRouter key** for the reviewer, revoke it after
    approval, and paste it into `store/reviewer-notes.md` where it says
    `[PASTE A TEMPORARY OPENROUTER KEY HERE]`.
