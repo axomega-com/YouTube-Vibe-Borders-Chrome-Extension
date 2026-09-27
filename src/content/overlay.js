@@ -1,4 +1,4 @@
-import { scoreToBorder, scoreLabel, formatBadge } from '../lib/score.js';
+import { scoreToBorder, scoreLabel, formatBadge, scoreToFilter } from '../lib/score.js';
 import { THUMB_SELECTOR, BADGE_CLASS, STYLE_ID } from '../lib/selectors.js';
 
 const CSS = `
@@ -21,7 +21,7 @@ export function injectStyles(doc = document) {
   doc.head.appendChild(style);
 }
 
-const SCORED_KEYS = ['ytvbScored', 'ytvbPos', 'ytvbNeg', 'ytvbCategory', 'ytvbColor', 'ytvbLabel'];
+const SCORED_KEYS = ['ytvbScored', 'ytvbPos', 'ytvbNeg', 'ytvbCategory', 'ytvbColor', 'ytvbLabel', 'ytvbFilter'];
 
 /** Paint one card. Returns false when the card has no thumbnail (ad slots, skeletons). */
 export function applyScore(card, score) {
@@ -30,6 +30,13 @@ export function applyScore(card, score) {
 
   const { color, widthPx } = scoreToBorder(score);
   if (getComputedStyle(thumb).position === 'static') thumb.style.position = 'relative';
+
+  // Grey + blur the image itself, never the wrapper: blurring the wrapper would smear
+  // the outline and make the badge illegible. 'none' clears any previous value.
+  const { css: filterCss } = scoreToFilter(score);
+  for (const img of thumb.querySelectorAll('img')) {
+    img.style.setProperty('filter', filterCss, 'important');
+  }
   // setProperty with 'important' because YouTube ships aggressive thumbnail CSS.
   thumb.style.setProperty('outline', `${widthPx}px solid ${color}`, 'important');
   thumb.style.setProperty('outline-offset', '-2px', 'important');
@@ -51,6 +58,7 @@ export function applyScore(card, score) {
   card.dataset.ytvbCategory = String(score.category ?? 'Other');
   card.dataset.ytvbColor = color;
   card.dataset.ytvbLabel = label;
+  card.dataset.ytvbFilter = filterCss;
   return true;
 }
 
@@ -60,6 +68,7 @@ export function clearScore(card) {
     thumb.style.removeProperty('outline');
     thumb.style.removeProperty('outline-offset');
     thumb.style.removeProperty('border-radius');
+    for (const img of thumb.querySelectorAll('img')) img.style.removeProperty('filter');
     thumb.querySelector(`.${BADGE_CLASS}`)?.remove();
   }
   for (const key of SCORED_KEYS) delete card.dataset[key];

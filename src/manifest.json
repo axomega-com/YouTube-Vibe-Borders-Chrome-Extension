@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YouTube Vibe Borders",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scores YouTube videos for positivity/negativity and outlines each thumbnail on a red-to-green gradient.",
   "permissions": ["storage", "tabs"],
   "host_permissions": ["https://openrouter.ai/*"],

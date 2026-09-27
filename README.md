@@ -17,7 +17,9 @@ Not affiliated with YouTube. Video titles are sent to OpenRouter for scoring.
    parses strict JSON, and caches each `videoId` for good.
 4. `overlay.js` outlines each thumbnail:
    `rgb(255*negativity/100, 255*positivity/100, 40)`, thickness
-   `3 + 7*max(p,n)/100` px.
+   `3 + 7*max(p,n)/100` px, and greys + blurs the image itself in proportion to
+   negativity (`80% negative -> grayscale(0.8) blur(3.2px)`), capped by
+   `MAX_BLUR_PX = 4` in `src/lib/score.js`.
 
 ## Dev
 

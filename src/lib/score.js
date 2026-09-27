@@ -32,6 +32,21 @@ export function scoreToBorder({ positivity, negativity } = {}) {
   return { color: `rgb(${r},${g},${BLUE_FLOOR})`, widthPx };
 }
 
+/** Blur is proportional too, but CSS blur() needs a length, so scale against a max. */
+export const MAX_BLUR_PX = 4;
+
+/**
+ * Negativity makes the picture hard to look at: it greys and blurs the thumbnail
+ * proportionally. 80% negative -> grayscale(0.8) blur(3.2px). Positivity is ignored.
+ */
+export function scoreToFilter({ negativity } = {}) {
+  const n = pct(negativity);
+  if (n === 0) return { grayscale: 0, blurPx: 0, css: 'none' };
+  const grayscale = n;
+  const blurPx = Math.round(n * MAX_BLUR_PX * 100) / 100;
+  return { grayscale, blurPx, css: `grayscale(${grayscale}) blur(${blurPx}px)` };
+}
+
 export function scoreLabel({ positivity, negativity } = {}) {
   const p = Number(positivity) || 0;
   const n = Number(negativity) || 0;

@@ -209,6 +209,8 @@ async function main() {
         title: (c.querySelector('#video-title')?.textContent || '').trim().slice(0, 50),
         p: Number(c.dataset.ytvbPos), n: Number(c.dataset.ytvbNeg),
         cat: c.dataset.ytvbCategory, color: c.dataset.ytvbColor, label: c.dataset.ytvbLabel,
+        filter: c.dataset.ytvbFilter,
+        imgFilter: (() => { const i = c.querySelector('img'); return i ? getComputedStyle(i).filter : '(no img)'; })(),
       })))`,
       returnByValue: true,
     },
@@ -223,6 +225,19 @@ async function main() {
   console.log(`overlays painted: ${count}`);
   console.table(scored);
 
+  // The filter must be proportional to the reported negativity, and must have actually
+  // landed on the <img> (getComputedStyle), not just in a data attribute.
+  const filterOk = (r) => {
+    if (r.n === 0) return r.filter === 'none' && r.imgFilter === 'none';
+    const m = /^grayscale\(([\d.]+)\) blur\(([\d.]+)px\)$/.exec(r.filter || '');
+    if (!m) return false;
+    return (
+      Math.abs(Number(m[1]) - r.n / 100) < 0.011 &&
+      Math.abs(Number(m[2]) - (r.n / 100) * 4) < 0.05 &&
+      String(r.imgFilter).startsWith('grayscale(')
+    );
+  };
+
   const valid =
     scored.length > 0 &&
     scored.every(
@@ -231,7 +246,8 @@ async function main() {
         Number.isInteger(r.n) && r.n >= 0 && r.n <= 100 &&
         typeof r.cat === 'string' && r.cat.length > 0 &&
         /^rgb\(\d+,\d+,40\)$/.test(r.color || '') &&
-        ['Positive', 'Negative', 'Mixed'].includes(r.label),
+        ['Positive', 'Negative', 'Mixed'].includes(r.label) &&
+        filterOk(r),
     );
 
   console.log('screenshot:', screenshotPath);

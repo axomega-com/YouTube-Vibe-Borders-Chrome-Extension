@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scoreToBorder, scoreLabel, formatBadge, CATEGORIES } from '../src/lib/score.js';
+import { scoreToBorder, scoreLabel, formatBadge, scoreToFilter, CATEGORIES } from '../src/lib/score.js';
 
 test('pure positivity is thick full green', () => {
   assert.deepEqual(scoreToBorder({ positivity: 100, negativity: 0 }), { color: 'rgb(0,255,40)', widthPx: 10 });
@@ -35,6 +35,26 @@ test('label boundaries', () => {
 test('badge shows category and both scores', () => {
   assert.equal(formatBadge({ positivity: 62.4, negativity: 18, category: 'Comedy' }), 'Comedy · +62 / -18');
   assert.equal(formatBadge({ positivity: 5, negativity: 5, category: 'Nonsense' }), 'Other · +5 / -5');
+});
+
+test('negativity drives greyscale and blur proportionally', () => {
+  assert.deepEqual(scoreToFilter({ negativity: 0 }), { grayscale: 0, blurPx: 0, css: 'none' });
+  assert.deepEqual(scoreToFilter({ negativity: 50 }), { grayscale: 0.5, blurPx: 2, css: 'grayscale(0.5) blur(2px)' });
+  assert.deepEqual(scoreToFilter({ negativity: 80 }), { grayscale: 0.8, blurPx: 3.2, css: 'grayscale(0.8) blur(3.2px)' });
+  assert.deepEqual(scoreToFilter({ negativity: 100 }), { grayscale: 1, blurPx: 4, css: 'grayscale(1) blur(4px)' });
+});
+
+test('the filter ignores positivity entirely', () => {
+  assert.equal(scoreToFilter({ positivity: 100, negativity: 0 }).css, 'none', 'a happy video stays in colour');
+  assert.equal(scoreToFilter({ positivity: 90, negativity: 40 }).css, 'grayscale(0.4) blur(1.6px)');
+});
+
+test('filter clamps and survives garbage', () => {
+  assert.deepEqual(scoreToFilter({ negativity: 400 }), { grayscale: 1, blurPx: 4, css: 'grayscale(1) blur(4px)' });
+  assert.equal(scoreToFilter({ negativity: -20 }).css, 'none');
+  assert.equal(scoreToFilter({}).css, 'none');
+  assert.equal(scoreToFilter().css, 'none');
+  assert.equal(scoreToFilter({ negativity: 'nonsense' }).css, 'none');
 });
 
 test('category list is the eleven agreed buckets', () => {
