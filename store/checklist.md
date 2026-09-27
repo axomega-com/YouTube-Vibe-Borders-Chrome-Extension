@@ -15,7 +15,7 @@ dev API key.
 | Listing name, short description, detailed description | `store/listing.md` |
 | Permission justifications | `store/permission-justifications.md` |
 | Reviewer notes | `store/reviewer-notes.md` |
-| Privacy policy, markdown and hostable HTML | `store/privacy-policy.md`, `store/privacy-policy.html` |
+| Privacy policy | `store/privacy-policy.md`, published at `docs/privacy-policy.html` via GitHub Pages |
 | Screenshots at exactly 1280x800 | `out/store/screenshot-*.png` |
 | Permission warnings minimised | `tabs` dropped, so no "read your browsing history" prompt |
 | No dev key in the package | verified by the build script on every build |
