@@ -1,13 +1,13 @@
-import { findCards, extractMeta, BADGE_CLASS, STYLE_ID, BANNER_ID } from '../lib/selectors.js';
+import { findThumbAnchors, extractMeta, BADGE_CLASS, STYLE_ID, BANNER_ID } from '../lib/selectors.js';
 import { injectStyles, applyScore } from './overlay.js';
 
 const ATTEMPTS = new Map(); // videoId -> how many times we have asked about it
 const MAX_ATTEMPTS_PER_VIDEO = 2; // a model that omits a video gets exactly one retry
-const CARDS = new Map(); // videoId -> card element
+const TARGETS = new Map(); // videoId -> every anchor on the page showing that video
 let timer = null;
 
-function nearViewport(card) {
-  const rect = card.getBoundingClientRect();
+function nearViewport(el) {
+  const rect = el.getBoundingClientRect();
   return rect.bottom > -400 && rect.top < innerHeight + 800;
 }
 
@@ -33,23 +33,29 @@ function applyResponse(res, batch) {
   }
   if (res.error) console.warn('[ytvb] scorer error:', res.error, res.detail ?? '');
   for (const meta of batch) {
-    const card = CARDS.get(meta.videoId);
     const score = res.scores?.[meta.videoId];
-    if (card?.isConnected && score) applyScore(card, score);
+    if (!score) continue;
+    for (const el of TARGETS.get(meta.videoId) ?? []) {
+      if (el.isConnected) applyScore(el, score, meta);
+    }
   }
 }
 
 async function pump() {
   const batch = [];
-  for (const card of findCards()) {
-    if (card.dataset.ytvbScored || card.dataset.ytvbPending) continue;
-    if (!nearViewport(card)) continue;
-    const meta = extractMeta(card);
+  for (const anchor of findThumbAnchors()) {
+    if (anchor.dataset.ytvbScored || anchor.dataset.ytvbPending) continue;
+    if (!nearViewport(anchor)) continue;
+    const meta = extractMeta(anchor);
     if (!meta) continue;
     const tries = ATTEMPTS.get(meta.videoId) ?? 0;
     if (tries >= MAX_ATTEMPTS_PER_VIDEO) continue;
-    card.dataset.ytvbPending = '1';
-    CARDS.set(meta.videoId, card);
+
+    // One video can be on screen several times; register every anchor so they all get painted.
+    TARGETS.set(meta.videoId, [...(TARGETS.get(meta.videoId) ?? []), anchor]);
+    if (batch.some((m) => m.videoId === meta.videoId)) continue; // already queued this pass
+
+    anchor.dataset.ytvbPending = '1';
     ATTEMPTS.set(meta.videoId, tries + 1);
     batch.push(meta);
     if (batch.length >= 10) break;
@@ -63,7 +69,9 @@ async function pump() {
     console.warn('[ytvb] sendMessage failed:', err);
     for (const meta of batch) ATTEMPTS.set(meta.videoId, Math.max(0, (ATTEMPTS.get(meta.videoId) ?? 1) - 1));
   } finally {
-    for (const meta of batch) CARDS.get(meta.videoId)?.removeAttribute('data-ytvb-pending');
+    for (const meta of batch) {
+      for (const el of TARGETS.get(meta.videoId) ?? []) el.removeAttribute('data-ytvb-pending');
+    }
   }
 }
 
@@ -91,11 +99,19 @@ function onMutations(records) {
 export function start() {
   injectStyles();
 
-  // Rescan when the user asks, from the popup.
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+    // So the popup can tell the user whether this tab is actually running the script.
+    if (msg?.type === 'ytvb:status') {
+      sendResponse({
+        cards: findThumbAnchors().length,
+        scored: document.querySelectorAll('[data-ytvb-scored]').length,
+      });
+      return;
+    }
     if (msg?.type !== 'ytvb:rescan') return;
     ATTEMPTS.clear();
-    for (const card of findCards()) card.removeAttribute('data-ytvb-scored');
+    TARGETS.clear();
+    for (const el of findThumbAnchors()) el.removeAttribute('data-ytvb-scored');
     schedule();
   });
 

@@ -70,3 +70,34 @@ Results from the real runs on this machine, not guesses:
   harness finds our worker by checking `chrome.runtime.getManifest().name`, because a
   fresh CfT profile also runs a built-in "Google Hangouts" service worker that will
   happily accept an injected key and do nothing with it.
+
+### YouTube serves two different layouts (read this before touching selectors)
+
+The same markup does not exist everywhere. Measured on two surfaces in one session:
+
+| Surface | Card element | Thumbnail anchor | Title node |
+| --- | --- | --- | --- |
+| Search results | `ytd-video-renderer` | `a#thumbnail` | `a#video-title` |
+| Watch sidebar, channel pages, feeds | `yt-lockup-view-model` | `a.ytLockupViewModelContentImage` | `a.ytLockupMetadataViewModelTitle` |
+
+On a watch page showing four thumbnails, `ytd-compact-video-renderer` matched **0**
+elements. Hard-coded card wrappers therefore rot silently: search kept working while the
+watch page, channel pages and feeds painted nothing at all.
+
+Discovery is **anchor-driven** instead: find `a[href*="/watch?v="]` (or `/shorts/`,
+`/live/`) that actually contains an `img`, read the video id from the href, then climb to
+the smallest ancestor that also contains a title node. That container is the card, on
+either layout. To re-check after a YouTube change:
+
+    node tools/probe-dom.mjs     # dumps card types, anchors, titles and images per surface
+
+### Diagnosing "nothing happens"
+
+The popup reports **This tab: N of M thumbnails scored**. If it says *not running*, the
+content script is not in that tab - reload the tab, or press **Inject into open YouTube
+tabs**. Manifest-registered content scripts never appear in tabs that were already open
+when the extension was installed, so the service worker also injects into them from
+`onInstalled`; `content/bootstrap.js` guards against a double `start()`.
+
+`node tools/verify-inject.mjs` proves that path: it seeds the key, scores a watch page,
+re-runs the injection, and asserts no card ends up with two badges.

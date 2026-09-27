@@ -1,5 +1,5 @@
 import { scoreToBorder, scoreLabel, formatBadge, scoreToFilter } from '../lib/score.js';
-import { THUMB_SELECTOR, BADGE_CLASS, STYLE_ID } from '../lib/selectors.js';
+import { BADGE_CLASS, STYLE_ID } from '../lib/selectors.js';
 
 const CSS = `
 .${BADGE_CLASS} {
@@ -21,11 +21,15 @@ export function injectStyles(doc = document) {
   doc.head.appendChild(style);
 }
 
-const SCORED_KEYS = ['ytvbScored', 'ytvbPos', 'ytvbNeg', 'ytvbCategory', 'ytvbColor', 'ytvbLabel', 'ytvbFilter'];
+const SCORED_KEYS = [
+  'ytvbScored', 'ytvbPos', 'ytvbNeg', 'ytvbCategory', 'ytvbColor', 'ytvbLabel', 'ytvbFilter', 'ytvbTitle',
+];
 
-/** Paint one card. Returns false when the card has no thumbnail (ad slots, skeletons). */
-export function applyScore(card, score) {
-  const thumb = card.querySelector(THUMB_SELECTOR);
+/**
+ * Paint one thumbnail. `thumb` is the anchor wrapping the image (see findThumbAnchors) -
+ * the same element on both YouTube layouts. Returns false if it has gone away.
+ */
+export function applyScore(thumb, score, meta = {}) {
   if (!thumb) return false;
 
   const { color, widthPx } = scoreToBorder(score);
@@ -44,7 +48,7 @@ export function applyScore(card, score) {
 
   let badge = thumb.querySelector(`.${BADGE_CLASS}`);
   if (!badge) {
-    badge = card.ownerDocument.createElement('div');
+    badge = thumb.ownerDocument.createElement('div');
     badge.className = BADGE_CLASS;
     thumb.appendChild(badge);
   }
@@ -52,25 +56,24 @@ export function applyScore(card, score) {
   badge.textContent = formatBadge(score);
   badge.dataset.label = label;
 
-  card.dataset.ytvbScored = '1';
-  card.dataset.ytvbPos = String(Math.round(Number(score.positivity) || 0));
-  card.dataset.ytvbNeg = String(Math.round(Number(score.negativity) || 0));
-  card.dataset.ytvbCategory = String(score.category ?? 'Other');
-  card.dataset.ytvbColor = color;
-  card.dataset.ytvbLabel = label;
-  card.dataset.ytvbFilter = filterCss;
+  thumb.dataset.ytvbScored = '1';
+  thumb.dataset.ytvbPos = String(Math.round(Number(score.positivity) || 0));
+  thumb.dataset.ytvbNeg = String(Math.round(Number(score.negativity) || 0));
+  thumb.dataset.ytvbCategory = String(score.category ?? 'Other');
+  thumb.dataset.ytvbColor = color;
+  thumb.dataset.ytvbLabel = label;
+  thumb.dataset.ytvbFilter = filterCss;
+  thumb.dataset.ytvbTitle = String(meta.title ?? '').slice(0, 100);
   return true;
 }
 
-export function clearScore(card) {
-  const thumb = card.querySelector(THUMB_SELECTOR);
-  if (thumb) {
-    thumb.style.removeProperty('outline');
-    thumb.style.removeProperty('outline-offset');
-    thumb.style.removeProperty('border-radius');
-    for (const img of thumb.querySelectorAll('img')) img.style.removeProperty('filter');
-    thumb.querySelector(`.${BADGE_CLASS}`)?.remove();
-  }
-  for (const key of SCORED_KEYS) delete card.dataset[key];
-  delete card.dataset.ytvbPending;
+export function clearScore(thumb) {
+  if (!thumb) return;
+  thumb.style.removeProperty('outline');
+  thumb.style.removeProperty('outline-offset');
+  thumb.style.removeProperty('border-radius');
+  for (const img of thumb.querySelectorAll('img')) img.style.removeProperty('filter');
+  thumb.querySelector(`.${BADGE_CLASS}`)?.remove();
+  for (const key of SCORED_KEYS) delete thumb.dataset[key];
+  delete thumb.dataset.ytvbPending;
 }

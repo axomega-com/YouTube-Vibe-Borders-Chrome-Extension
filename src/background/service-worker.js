@@ -117,6 +117,41 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   return true;
 });
 
+/**
+ * Content scripts declared in the manifest do NOT appear in tabs that were already open when
+ * the extension was installed or reloaded. Without this, anyone who installs while YouTube is
+ * open sees nothing at all, and reasonably concludes the extension is broken.
+ */
+async function injectIntoOpenTabs() {
+  const tabs = await chrome.tabs.query({ url: 'https://www.youtube.com/*' });
+  let injected = 0;
+  for (const tab of tabs) {
+    if (tab.id === undefined) continue;
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id, allFrames: false },
+        files: ['content/bootstrap.js'],
+      });
+      injected += 1;
+    } catch (err) {
+      console.warn('[ytvb] could not inject into tab', tab.id, String(err));
+    }
+  }
+  return injected;
+}
+
+chrome.runtime.onInstalled.addListener((details) => {
+  injectIntoOpenTabs().then((count) => console.log(`[ytvb] ${details.reason}: injected into ${count} open YouTube tab(s)`));
+});
+
+chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+  if (msg?.type !== 'ytvb:injectNow') return false;
+  injectIntoOpenTabs()
+    .then((count) => sendResponse({ count }))
+    .catch((err) => sendResponse({ count: 0, error: String(err) }));
+  return true;
+});
+
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type !== 'ytvb:clearCache') return false;
   cache.clear().then(() => sendResponse({ ok: true }));

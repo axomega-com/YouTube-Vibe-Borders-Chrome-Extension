@@ -202,14 +202,36 @@ async function main() {
   await sleep(3000);
   count = await scoredCount();
 
-  const CARD_TOTAL = `document.querySelectorAll('ytd-rich-item-renderer, ytd-video-renderer, ytd-grid-video-renderer, ytd-compact-video-renderer').length`;
+  const CARD_TOTAL = `[...document.querySelectorAll('a[href*="/watch?v="], a[href*="/shorts/"], a[href*="/live/"]')].filter((a) => a.querySelector('img')).length`;
   console.log(`cards on page: ${await evaluate(CARD_TOTAL)} | scored: ${count}`);
+
+  // Always report the page state: without this a failure says only "nothing happened",
+  // which is useless when the cause is a consent wall, a bot check or an unexpected layout.
+  const state = await evaluate(`JSON.stringify({
+    url: location.href,
+    title: document.title,
+    readyState: document.readyState,
+    bodyText: (document.body && document.body.innerText || '').replace(/\s+/g, ' ').slice(0, 220),
+    contentScriptRan: Boolean(document.getElementById('ytvb-styles')),
+    noKeyBanner: Boolean(document.getElementById('ytvb-banner')),
+    counts: {
+      ytdRichItem: document.querySelectorAll('ytd-rich-item-renderer').length,
+      ytdVideo: document.querySelectorAll('ytd-video-renderer').length,
+      ytdGridVideo: document.querySelectorAll('ytd-grid-video-renderer').length,
+      ytdCompact: document.querySelectorAll('ytd-compact-video-renderer').length,
+      richGridMedia: document.querySelectorAll('ytd-rich-grid-media').length,
+      thumbAnchorsWithImg: [...document.querySelectorAll('a[href*="/watch?v="], a[href*="/shorts/"], a[href*="/live/"]')].filter((a) => a.querySelector('img')).length,
+      watchLinks: document.querySelectorAll('a[href*="watch?v="]').length,
+      totalElements: document.querySelectorAll('*').length,
+    },
+  })`);
+  console.log('page state:', state);
 
   const { result: dump } = await cdp.send(
     'Runtime.evaluate',
     {
       expression: `JSON.stringify([...document.querySelectorAll('[data-ytvb-scored]')].map((c) => ({
-        title: (c.querySelector('#video-title')?.textContent || '').trim().slice(0, 50),
+        title: (c.dataset.ytvbTitle || '').slice(0, 50),
         p: Number(c.dataset.ytvbPos), n: Number(c.dataset.ytvbNeg),
         cat: c.dataset.ytvbCategory, color: c.dataset.ytvbColor, label: c.dataset.ytvbLabel,
         filter: c.dataset.ytvbFilter,
